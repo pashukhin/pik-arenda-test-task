@@ -1,0 +1,1 @@
+drop table free_shedule if exists;

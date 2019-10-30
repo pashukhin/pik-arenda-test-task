@@ -1,0 +1,22 @@
+version: '3'
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: db
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - 5432:5432
+  app:
+    build: .
+    working_dir: /go/src/github.com/pashukhin/pik-arenda-test-task
+    command: go run main.go -http.addr :8080 -db.host db -db.port 5432 -db.user user -db.password password -db.database db
+    volumes:
+      - .:/go/src/github.com/pashukhin/pik-arenda-test-task
+    ports:
+      - 8080:8080
+    depends_on:
+      - db
+    links:
+      - db
