@@ -1,5 +1,5 @@
 
-Implementation of test task for PIK-Arenda.
+## Implementation of test task for PIK-Arenda.
 See https://docs.google.com/document/d/12s8dlqyHxM2JJ98Kkovfwzp6TOS3GN2w6Ts08kN2ev4/edit?usp=sharing for details.
 
 ### How to run
@@ -34,6 +34,6 @@ Result looks like
 Optional query params, `from` and `to`, are json datetime string, for example, `2019-10-30T09:00:00.0Z`.
 Result looks like `[{"start":"2019-10-30T09:00:00Z","end":"2019-10-30T18:00:00Z"}]`.
 
-#####Useful commands
+#### Useful commands
 - stop all containers `docker container stop $(docker container ls -aq)`
 - remove all containers `docker container rm $(docker container ls -aq)`
