@@ -18,6 +18,8 @@ func NewFreeSchedule(db *sqlx.DB) *FreeSchedule {
 	return &FreeSchedule{db}
 }
 
+var ErrNoFreeSlot = errors.New("no free slot")
+
 func (s *FreeSchedule) add(tx *sqlx.Tx, from, to time.Time, value int) (err error) {
 	// find interval containing from
 	cFrom := &entity.FreeSchedule{}
@@ -77,17 +79,37 @@ func (s *FreeSchedule) getFreeSlots(from, to *time.Time) (result []*entity.FreeS
 	if err != nil {
 		return
 	}
-	var f *time.Time
+	var f, t *time.Time
 	for _, fs := range intersects {
-		if f == nil && fs.Value > 0 {
-			f = &fs.Start
-			continue
-		}
-		if f != nil && fs.Value <= 0 {
-			result = append(result, &entity.FreeSlot{*f, fs.Start})
+		if fs.Value > 0 {
+			if f == nil {
+				f = &fs.Start
+			}
+			t = &fs.End
+		} else {
+			if f != nil && t != nil {
+				result = append(result, &entity.FreeSlot{*f, *t})
+			}
+			f, t = nil, nil
 		}
 	}
+	if f != nil && t != nil {
+		result = append(result, &entity.FreeSlot{*f, *t})
+	}
 	return
+}
+
+func (s * FreeSchedule) check(from, to time.Time) error {
+	if slots, err := s.getFreeSlots(&from, &to); err != nil {
+		return err
+	} else {
+		for _, fs := range slots {
+			if (fs.Start.Before(from) || fs.Start.Equal(from)) && (to.Before(fs.End) || to.Equal(fs.End)) {
+				return nil
+			}
+		}
+		return ErrNoFreeSlot
+	}
 }
 
 func (s *FreeSchedule) List(from, to *time.Time) (list []*entity.FreeSchedule, err error) {

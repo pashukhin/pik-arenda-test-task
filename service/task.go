@@ -10,10 +10,11 @@ import (
 
 type Task struct {
 	db *sqlx.DB
+	fs *FreeSchedule
 }
 
-func NewTask(db *sqlx.DB) *Task {
-	return &Task{db}
+func NewTask(db *sqlx.DB, fs *FreeSchedule) *Task {
+	return &Task{db, fs}
 }
 
 func (s *Task) List(from, to *time.Time) (list []*entity.Task, err error) {
@@ -36,22 +37,22 @@ func (s *Task) List(from, to *time.Time) (list []*entity.Task, err error) {
 }
 
 func (s *Task) Create(o *entity.Task) (err error) {
+	if err = s.fs.check(o.Start, o.End); err != nil {
+		return err
+	}
 	tx := s.db.MustBegin()
+	defer func(){
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
 	if err = tx.Get(o, `INSERT INTO "task" ("start", "end") VALUES ($1, $2) returning *`, o.Start, o.End); err != nil {
 		tx.Rollback()
 		return
 	}
-	// select all free_schedule included in task
-	// update it to value++
-	// select one free_schedule A including task.start
-	// insert new free_schedule with start = task.start, end = A.end, value = A.value+1
-	// update A to end = task.start
-	if _, err = tx.NamedExec(`insert into "free_time_point" ("task_id", "point", "value") values (:id, :start, -1), (:id, :end, 1)`, o); err != nil {
-		tx.Rollback()
-		return
-	}
-	tx.Commit()
-	return
+	return s.fs.add(tx, o.Start, o.End, -1)
 }
 
 func (s *Task) Get(id int) (o *entity.Task, err error) {
@@ -62,20 +63,45 @@ func (s *Task) Get(id int) (o *entity.Task, err error) {
 
 func (s *Task) Update(o *entity.Task) (err error) {
 	tx := s.db.MustBegin()
+	defer func(){
+		if err != nil {
+			tx.Rollback()
+		} else {
+			tx.Commit()
+		}
+	}()
+	oldObject := &entity.Task{}
+	if err = s.db.Get(oldObject, `select * from "task" where "id" = $1`, o.ID); err != nil {
+		return
+	}
+	// check for free slots
+	old := &interval{oldObject.Start, oldObject.End}
+	intersection, left, right := intersectionAndParts(old, &interval {o.Start, o.End})
+	if intersection == nil { // completely moved
+		if err = s.fs.check(o.Start, o.End); err != nil { // just check new position
+			return err
+		}
+	} else { // moved with intersection
+		if left != nil && left.start.Before(old.start) { // start moved left => left is new part
+			if err = s.fs.check(left.start, left.end); err != nil { // just check new position
+				return err
+			}
+		}
+		if right != nil && right.end.After(old.end) { // end moved right => right is new part
+			if err = s.fs.check(right.start, right.end); err != nil { // just check new position
+				return err
+			}
+		}
+	}
+	if err = s.fs.add(tx, oldObject.Start, oldObject.End, 1); err != nil {
+		return err
+	}
 	if err = tx.Get(o, `update "task" set "worker_id" = $1, "start" = $2, "end" = $3, "cancelled" = $4 where "id" = $5 returning *`, o.WorkerID, o.Start, o.End, o.Cancelled, o.ID); err != nil {
 		return err
 	}
-	if _, err = tx.NamedExec(`delete from "free_time_point" where "task_id" = :id`, o); err != nil {
-		tx.Rollback()
+	if err = s.fs.add(tx, o.Start, o.End, -1); err != nil {
 		return err
 	}
-	if !o.Cancelled {
-		if _, err = tx.NamedExec(`insert into "free_time_point" ("task_id", "point", "value") values (:id, :start, -1), (:id, :end, 1)`, o); err != nil {
-			tx.Rollback()
-			return err
-		}
-	}
-	tx.Commit()
 	return
 }
 
