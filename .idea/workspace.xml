@@ -2,7 +2,16 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="f5a89597-e5ff-4c1a-b527-b60e56782039" name="Default Changelist" comment="">
+<<<<<<< HEAD
       <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+=======
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/main.go" beforeDir="false" afterPath="$PROJECT_DIR$/main.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/free_schedule.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/free_schedule.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/schedule.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/schedule.go" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/service/task.go" beforeDir="false" afterPath="$PROJECT_DIR$/service/task.go" afterDir="false" />
+>>>>>>> 22ef3bbd39efdb01d9a8e40ca8e1598943f0b0fd
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
