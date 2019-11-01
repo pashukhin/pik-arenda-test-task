@@ -1,4 +1,5 @@
-##Implementations of test task for PIK-Arenda
+
+Implementation of test task for PIK-Arenda.
 See https://docs.google.com/document/d/12s8dlqyHxM2JJ98Kkovfwzp6TOS3GN2w6Ts08kN2ev4/edit?usp=sharing for details.
 
 ### How to run
