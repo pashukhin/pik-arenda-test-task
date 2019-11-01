@@ -66,32 +66,36 @@ func (s *Schedule) Update(o *entity.Schedule) (err error) {
 			tx.Commit()
 		}
 	}()
-	old := &interval{o.Start, o.End}
+	oldObject := &entity.Schedule{}
+	if err = s.db.Get(oldObject, `select * from "schedule" where "id" = $1`, o.ID); err != nil {
+		return
+	}
+	// old := &interval{oldObject.Start, oldObject.End}
+	//intersection, left, right := intersectionAndParts(old, &interval {o.Start, o.End})
+	//if intersection == nil { // completely moved
+	//	if err = s.fs.check(o.Start, o.End); err != nil { // just check new position
+	//		return err
+	//	}
+	//} else { // moved with intersection
+	//	if left != nil && left.start.Before(old.start) { // start moved left => left is new part
+	//		if err = s.fs.check(left.start, left.end); err != nil { // just check new position
+	//			return err
+	//		}
+	//	}
+	//	if right != nil && right.end.After(old.end) { // end moved right => right is new part
+	//		if err = s.fs.check(right.start, right.end); err != nil { // just check new position
+	//			return err
+	//		}
+	//	}
+	//}
+	if err = s.fs.add(tx, oldObject.Start, oldObject.End, -1); err != nil {
+		return err
+	}
 	if err = tx.Get(o, `update "schedule" set "worker_id" = $1, "start" = $2, "end" = $3 where "id" = $4 returning *`, o.WorkerID, o.Start, o.End, o.ID); err != nil {
 		return err
 	}
-	_, left, right := intersectionAndParts(old, &interval {o.Start, o.End})
-	if left != nil {
-		if left.start == old.start { // moved right
-			if err = s.fs.add(tx, left.start, left.end, -1); err != nil {
-				return err
-			}
-		} else { // moved left
-			if err = s.fs.add(tx, left.start, left.end, 1); err != nil {
-				return err
-			}
-		}
-	}
-	if right != nil {
-		if right.end == old.end { // moved left
-			if err = s.fs.add(tx, right.start, right.end, -1); err != nil {
-				return err
-			}
-		} else { // moved right
-			if err = s.fs.add(tx, right.start, right.end, 1); err != nil {
-				return err
-			}
-		}
+	if err = s.fs.add(tx, o.Start, o.End, 1); err != nil {
+		return err
 	}
 	return
 }

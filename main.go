@@ -39,7 +39,7 @@ func main() {
 	// services
 	freeScheduleService := service.NewFreeSchedule(db)
 	scheduleService := service.NewSchedule(db, freeScheduleService)
-	taskService := service.NewTask(db)
+	taskService := service.NewTask(db, freeScheduleService)
 	workerService := service.NewWorker(db)
 	freeSlotService := service.NewFreeSlot(freeScheduleService)
 
@@ -55,7 +55,7 @@ func main() {
 }
 
 func Db(dbHost *string, dbPort *int, dbUser *string, dbPassword *string, dbDatabase *string) *sqlx.DB {
-	//db, err := sqlx.Connect("postgres", "host=127.0.0.1 port=5432 user=user password=password dbname=db sslmode=disable")
+	// db, err := sqlx.Connect("postgres", "host=127.0.0.1 port=5432 user=user password=password dbname=db sslmode=disable")
 	dsn := fmt.Sprintf("host=%s port=%d user=%s password=%s dbname=%s sslmode=disable", *dbHost, *dbPort, *dbUser, *dbPassword, *dbDatabase)
 	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
@@ -77,8 +77,8 @@ func Db(dbHost *string, dbPort *int, dbUser *string, dbPassword *string, dbDatab
 }
 
 func Params() (*string, *string, *int, *string, *string, *string) {
-	httpAddr := flag.String("http.addr", ":8080", "HTTP listen address")
-	//httpAddr := flag.String("http.addr", ":8081", "HTTP listen address")
+	// httpAddr := flag.String("http.addr", ":8080", "HTTP listen address")
+	httpAddr := flag.String("http.addr", ":8081", "HTTP listen address")
 	dbHost := flag.String("db.host", "db", "db host")
 	dbPort := flag.Int("db.port", 5432, "db port")
 	dbUser := flag.String("db.user", "user", "db user")
